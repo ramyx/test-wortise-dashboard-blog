@@ -1,4 +1,3 @@
-// pages/api/blog/index.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
@@ -15,7 +14,6 @@ export default async function handler(
         const search = String(req.query.search || '').trim();
         const skip = (page - 1) * limit;
 
-        // Lookup directly using ObjectId stored in `author`
         const lookupStage = {
             $lookup: {
                 from: 'user',
@@ -26,7 +24,7 @@ export default async function handler(
         };
         const unwindStage = { $unwind: { path: '$authorDoc', preserveNullAndEmptyArrays: true } };
 
-        // Conditional match for search term
+        // mach for search
         const matchStage = search
             ? {
                 $match: {

@@ -1,13 +1,18 @@
+// pages/blog/edit/[id].tsx
 import { useForm, SubmitHandler } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useRouter } from 'next/router';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { usePostQuery, useUpdatePostMutation, PostInput } from '@/hooks/useBlog';
 import { useEffect } from 'react';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+import { usePostQuery, useUpdatePostMutation } from '@/hooks/useBlog';
+import { postSchema } from '@/schemas/postSchema';
+
+export type PostInput = z.infer<typeof postSchema>;
 
 export default function EditPostPage() {
     const router = useRouter();
     const { id } = router.query as { id: string };
-
     const { data: post, isPending, error } = usePostQuery(id);
     const updatePost = useUpdatePostMutation(id);
 
@@ -16,7 +21,16 @@ export default function EditPostPage() {
         handleSubmit,
         reset,
         formState: { errors }
-    } = useForm<PostInput>();
+    } = useForm<PostInput>({
+        resolver: zodResolver(postSchema),
+        defaultValues: {
+            title: '',
+            content: '',
+            coverImage: '',
+            author: '',
+            createdAt: ''
+        }
+    });
 
     useEffect(() => {
         if (post) {
@@ -65,20 +79,26 @@ export default function EditPostPage() {
                 <div>
                     <label className="block mb-1 text-lg font-medium">Título</label>
                     <input
-                        {...register('title', { required: true })}
+                        {...register('title')}
                         className="input input-bordered w-full"
+                        placeholder="Título del post"
                     />
-                    {errors.title && <p className="text-sm text-red-600">Este campo es obligatorio</p>}
+                    {errors.title && (
+                        <p className="text-sm text-error mt-1">{errors.title.message}</p>
+                    )}
                 </div>
 
-                {/* Texto */}
+                {/* Contenido */}
                 <div>
                     <label className="block mb-1 text-lg font-medium">Texto</label>
                     <textarea
-                        {...register('content', { required: true })}
+                        {...register('content')}
                         className="textarea textarea-bordered w-full h-32"
+                        placeholder="Contenido del post"
                     />
-                    {errors.content && <p className="text-sm text-red-600">Este campo es obligatorio</p>}
+                    {errors.content && (
+                        <p className="text-sm text-error mt-1">{errors.content.message}</p>
+                    )}
                 </div>
 
                 {/* Imagen de portada */}
@@ -94,22 +114,6 @@ export default function EditPostPage() {
                 {/* Campos ocultos */}
                 <input type="hidden" {...register('author')} />
                 <input type="hidden" {...register('createdAt')} />
-
-                {/* Autor */}
-                {/* <div>
-                    <label className="block mb-1 text-lg font-medium">Autor</label>
-                    <p className="input input-bordered w-full bg-gray-200 text-gray-600">
-                        {post?.author.name}
-                    </p>
-                </div> */}
-
-                {/* Fecha de creación */}
-                {/* <div>
-                    <label className="block mb-1 text-lg font-medium">Fecha de creación</label>
-                    <p className="input input-bordered w-full bg-gray-200 text-gray-600">
-                        {new Date(post?.createdAt).toLocaleDateString()}
-                    </p>
-                </div> */}
 
                 {/* Botón Actualizar */}
                 <div>

@@ -33,21 +33,17 @@ export default function SignUpPage() {
         }
 
         try {
-            // Esperar a que grecaptcha esté listo
             await new Promise<void>((resolve) => window.grecaptcha!.ready(resolve));
-            // Generar token para la acción "sign_up"
             const token = await window.grecaptcha!.execute(
                 process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!,
                 { action: "sign_up" }
             );
 
-            // Llamar a la mutación incluyendo captchaToken
             await signUp.mutateAsync({
                 ...data,
                 captchaToken: token,
             });
 
-            // Redirigir al dashboard tras registro exitoso
             router.push("/dashboard");
         } catch (err: any) {
             const apiErr = err as APIError;
