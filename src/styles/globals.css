@@ -4,9 +4,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Color Palette */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Palette Colors */
+  --paynes-gray: #646e78ff;
+  --cadet-gray: #8d98a7ff;
+  --dun: #dcccbbff;
+  --earth-yellow: #eab464ff;
+  --chamoisee: #a7754dff;
+
+  /* Gradients */
+  --gradient-top: linear-gradient(0deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-right: linear-gradient(90deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-bottom: linear-gradient(180deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-left: linear-gradient(270deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-top-right: linear-gradient(45deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-bottom-right: linear-gradient(135deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-top-left: linear-gradient(225deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-bottom-left: linear-gradient(315deg, var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
+  --gradient-radial: radial-gradient(var(--paynes-gray), var(--cadet-gray), var(--dun), var(--earth-yellow), var(--chamoisee));
 }
 
 @theme inline {

@@ -2,18 +2,43 @@ import Link from 'next/link';
 
 export default function Sidebar() {
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 flex flex-col justify-between">
+        <aside
+            className="w-64 flex flex-col justify-between"
+            style={{
+                backgroundColor: 'var(--cadet-gray)',
+                borderRight: '2px solid var(--paynes-gray)',
+            }}
+        >
             <nav className="px-6 py-8 space-y-8">
                 <div>
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Blog</h3>
+                    <h3
+                        className="text-sm font-medium uppercase tracking-wide"
+                        style={{ color: 'var(--dun)' }}
+                    >
+                        Blog
+                    </h3>
                     <ul className="mt-2 space-y-2">
                         <li>
-                            <Link href="/dashboard/blog/posts" className="block px-4 py-2 hover:bg-gray-100 rounded">
+                            <Link
+                                href="/dashboard/blog/posts"
+                                className="block px-4 py-2 rounded"
+                                style={{
+                                    color: 'var(--foreground)',
+                                    backgroundColor: 'transparent',
+                                }}
+                            >
                                 Posts
                             </Link>
                         </li>
                         <li>
-                            <Link href="/dashboard/blog/new" className="block px-4 py-2 hover:bg-gray-100 rounded">
+                            <Link
+                                href="/dashboard/blog/new"
+                                className="block px-4 py-2 rounded"
+                                style={{
+                                    color: 'var(--foreground)',
+                                    backgroundColor: 'transparent',
+                                }}
+                            >
                                 New Post
                             </Link>
                         </li>
