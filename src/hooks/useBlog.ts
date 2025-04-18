@@ -23,19 +23,23 @@ export type PostInput = {
 };
 
 /**
- * 1) Fetch paginated list of posts
+ * 1) Fetch paginated list of posts with optional search
  */
-export function usePostsQuery(page = 1, limit = 10) {
+export function usePostsQuery(
+    page = 1,
+    limit = 10,
+    search = ''
+) {
     return useQuery<{
         posts: Post[];
         page: number;
         total: number;
         totalPages: number;
     }, Error>({
-        queryKey: ['posts', page],
+        queryKey: ['posts', page, search],
         queryFn: () =>
             axios
-                .get('/api/blog', { params: { page, limit } })
+                .get('/api/blog', { params: { page, limit, search } })
                 .then(res => res.data),
     });
 }

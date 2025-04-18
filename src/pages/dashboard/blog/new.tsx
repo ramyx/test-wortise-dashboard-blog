@@ -72,14 +72,10 @@ export default function NewPostPage() {
                 {/* Campo autor oculto, se asigna en onSubmit */}
                 <input type="hidden" {...register('author')} />
 
-                <div>
-                    <label className="block mb-1 text-lg font-medium">Fecha de creación</label>
-                    <input
-                        type="date"
-                        {...register('createdAt', { required: true })}
-                        className="input input-bordered w-full"
-                    />
-                </div>
+                <input
+                    type="hidden"
+                    {...register('createdAt')}
+                />
 
                 <button
                     type="submit"

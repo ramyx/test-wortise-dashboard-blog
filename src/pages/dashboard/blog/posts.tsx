@@ -5,7 +5,9 @@ import { usePostsQuery, useDeletePostMutation } from '@/hooks/useBlog';
 
 export default function PostsPage() {
     const [page, setPage] = useState(1);
-    const { data, isLoading, error } = usePostsQuery(page, 6);
+    const [search, setSearch] = useState('');
+    // Hook actualizado para aceptar search term
+    const { data, isLoading, error } = usePostsQuery(page, 6, search);
     const deletePost = useDeletePostMutation();
 
     if (isLoading) {
@@ -33,101 +35,97 @@ export default function PostsPage() {
 
     return (
         <DashboardLayout>
-            <div className="flex justify-between items-center mb-6">
-                <h2
-                    className="text-3xl font-semibold"
-                    style={{ color: 'var(--paynes-gray)' }}
-                >
+            {/* Header con buscador */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
+                <h2 className="text-2xl font-semibold" style={{ color: 'var(--paynes-gray)' }}>
                     Posts
                 </h2>
-                <Link
-                    href="/dashboard/blog/new"
-                    className="btn"
-                    style={{ backgroundColor: 'var(--earth-yellow)', color: 'var(--paynes-gray)' }}
-                >
-                    Nuevo Post
-                </Link>
-            </div>
-
-            <div className="grid gap-6">
-                {posts.map((post) => (
-                    <div
-                        key={post._id}
-                        className="card shadow-md p-6"
-                        style={{ backgroundColor: 'var(--dun)' }}
+                <div className="flex space-x-2 w-full md:w-auto">
+                    <input
+                        type="text"
+                        placeholder="Buscar título, contenido o autor..."
+                        value={search}
+                        onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                        className="input input-bordered flex-1"
+                    />
+                    <Link
+                        href="/dashboard/blog/new"
+                        className="btn"
+                        style={{ backgroundColor: 'var(--earth-yellow)', color: 'var(--paynes-gray)' }}
                     >
-                        {post.coverImage && (
-                            <img
-                                src={post.coverImage}
-                                alt={post.title}
-                                className="w-full h-48 object-cover rounded mb-4"
-                            />
-                        )}
-
-                        <h3
-                            className="text-2xl font-bold"
-                            style={{ color: 'var(--paynes-gray)' }}
-                        >
-                            {post.title}
-                        </h3>
-                        <p
-                            className="text-sm"
-                            style={{ color: 'var(--chamoisee)' }}
-                        >
-                            Autor: {post.author.name}
-                        </p>
-                        <p
-                            className="text-sm mb-4"
-                            style={{ color: 'var(--cadet-gray)' }}
-                        >
-                            Creado: {new Date(post.createdAt).toLocaleString()}
-                        </p>
-
-                        <div className="flex space-x-4">
-                            <Link
-                                href={`/dashboard/blog/${post._id}/view`}
-                                className="btn btn-link"
-                                style={{ color: 'var(--chamoisee)' }}
-                            >
-                                Ver
-                            </Link>
-                            <Link
-                                href={`/dashboard/blog/${post._id}/edit`}
-                                className="btn btn-link"
-                                style={{ color: 'var(--chamoisee)' }}
-                            >
-                                Editar
-                            </Link>
-                            <button
-                                onClick={() => deletePost.mutate(post._id)}
-                                className="btn btn-error"
-                                style={{ backgroundColor: 'var(--earth-yellow)', color: 'var(--paynes-gray)' }}
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                        Nuevo
+                    </Link>
+                </div>
             </div>
 
-            {/* Pagination Controls */}
-            <div className="flex justify-center items-center space-x-4 mt-6">
+            {/* Lista compacta */}
+            <div className="overflow-x-auto">
+                <table className="table w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Autor</th>
+                            <th>Creado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {posts.map((post) => (
+                            <tr key={post._id}>
+                                <td className="font-medium" style={{ color: 'var(--paynes-gray)' }}>
+                                    {post.title}
+                                </td>
+                                <td style={{ color: 'var(--chamoisee)' }}>{post.author.name}</td>
+                                <td style={{ color: 'var(--cadet-gray)' }}>
+                                    {new Date(post.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="space-x-2">
+                                    <Link
+                                        href={`/dashboard/blog/${post._id}/view`}
+                                        className="link"
+                                        style={{ color: 'var(--sky-magenta)' }}
+                                    >
+                                        Ver
+                                    </Link>
+                                    <Link
+                                        href={`/dashboard/blog/${post._id}/edit`}
+                                        className="link"
+                                        style={{ color: 'var(--sky-magenta)' }}
+                                    >
+                                        Editar
+                                    </Link>
+                                    <button
+                                        onClick={() => deletePost.mutate(post._id)}
+                                        className="link"
+                                        style={{ color: 'var(--sky-magenta)' }}
+                                    >
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Paginado */}
+            <div className="flex justify-center items-center space-x-4 mt-4">
                 <button
-                    className="btn"
+                    className="btn btn-sm"
                     onClick={() => setPage(old => Math.max(old - 1, 1))}
                     disabled={page === 1}
                 >
-                    « Anterior
+                    «
                 </button>
-                <span className="text-sm" style={{ color: 'var(--paynes-gray)' }}>
-                    Página {page} de {totalPages}
+                <span style={{ color: 'var(--paynes-gray)' }}>
+                    {page} / {totalPages}
                 </span>
                 <button
-                    className="btn"
+                    className="btn btn-sm"
                     onClick={() => setPage(old => Math.min(old + 1, totalPages))}
                     disabled={page === totalPages}
                 >
-                    Siguiente »
+                    »
                 </button>
             </div>
         </DashboardLayout>
