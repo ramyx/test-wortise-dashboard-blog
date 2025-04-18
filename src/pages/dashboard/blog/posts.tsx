@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { usePostsQuery, useDeletePostMutation } from '@/hooks/useBlog';
 
 export default function PostsPage() {
-    const { data: posts, isLoading, error } = usePostsQuery();
+    const [page, setPage] = useState(1);
+    const { data, isLoading, error } = usePostsQuery(page, 2);
     const deletePost = useDeletePostMutation();
 
     if (isLoading) {
@@ -20,13 +21,15 @@ export default function PostsPage() {
         );
     }
 
-    if (error) {
+    if (error || !data) {
         return (
             <DashboardLayout>
-                <p className="text-center text-red-600">Error: {error.message}</p>
+                <p className="text-center text-red-600">Error: {error?.message}</p>
             </DashboardLayout>
         );
     }
+
+    const { posts, totalPages } = data;
 
     return (
         <DashboardLayout>
@@ -47,7 +50,7 @@ export default function PostsPage() {
             </div>
 
             <div className="grid gap-6">
-                {posts?.map((post) => (
+                {posts.map((post) => (
                     <div
                         key={post._id}
                         className="card shadow-md p-6"
@@ -98,6 +101,27 @@ export default function PostsPage() {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center space-x-4 mt-6">
+                <button
+                    className="btn"
+                    onClick={() => setPage(old => Math.max(old - 1, 1))}
+                    disabled={page === 1}
+                >
+                    « Anterior
+                </button>
+                <span className="text-sm" style={{ color: 'var(--paynes-gray)' }}>
+                    Página {page} de {totalPages}
+                </span>
+                <button
+                    className="btn"
+                    onClick={() => setPage(old => Math.min(old + 1, totalPages))}
+                    disabled={page === totalPages}
+                >
+                    Siguiente »
+                </button>
             </div>
         </DashboardLayout>
     );

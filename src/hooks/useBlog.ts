@@ -10,10 +10,18 @@ export type Post = {
     createdAt: string;
 };
 
-export function usePostsQuery() {
-    return useQuery<Post[], Error>({
-        queryKey: ['posts'],
-        queryFn: () => axios.get('/api/blog').then(res => res.data),
+export function usePostsQuery(page = 1, limit = 10) {
+    return useQuery<{
+        posts: Post[];
+        page: number;
+        total: number;
+        totalPages: number;
+    }, Error>({
+        queryKey: ['posts', page],
+        queryFn: () =>
+            axios
+                .get('/api/blog', { params: { page, limit } })
+                .then(res => res.data),
     });
 }
 
