@@ -1,4 +1,3 @@
-// hooks/useSignUpMutation.ts
 import { useRouter } from "next/router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";

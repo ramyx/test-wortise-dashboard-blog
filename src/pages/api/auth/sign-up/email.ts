@@ -2,7 +2,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { auth } from "@/lib/auth";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    // Solo aceptamos método POST
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method not allowed" });
     }
@@ -15,7 +14,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
         });
 
-        // Llamamos al método de registro del servidor provisto por Better Auth.
         const result = await auth.api.signUpEmail({
             body: req.body,
             headers,
