@@ -15,38 +15,60 @@ export default async function handler(
 
     switch (req.method) {
         case 'GET': {
-            const post = await postsCol.findOne({ _id });
+            const pipeline = [
+                { $match: { _id } },
+                {
+                    $lookup: {
+                        from: 'user',
+                        localField: 'author',
+                        foreignField: '_id',
+                        as: 'authorDoc'
+                    }
+                },
+                {
+                    $unwind: {
+                        path: '$authorDoc',
+                        preserveNullAndEmptyArrays: true
+                    }
+                },
+                {
+                    $project: {
+                        _id: { $toString: '$_id' },
+                        title: 1,
+                        content: 1,
+                        coverImage: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                        author: {
+                            id: { $toString: '$authorDoc._id' },
+                            name: '$authorDoc.name'
+                        }
+                    }
+                }
+            ];
+
+            const [post] = await postsCol.aggregate(pipeline).toArray();
             if (!post) {
                 return res.status(404).json({ error: 'Post no encontrado.' });
             }
-            return res.status(200).json({
-                _id: post._id.toString(),
-                title: post.title,
-                content: post.content,
-                coverImage: post.coverImage,
-                createdAt: post.createdAt,
-                updatedAt: post.updatedAt,
-                author: {
-                    id: post.author.toString(),
-                    name: post.authorName || ''
-                }
-            });
+            return res.status(200).json(post);
         }
 
         case 'PUT': {
             const { title, content, coverImage, createdAt } = req.body;
-            if (!title || !content || !createdAt) {
-                return res.status(400).json({ error: 'Título, contenido y fecha son requeridos.' });
+
+            if (!title || !content) {
+                return res.status(400).json({ error: 'Título, contenido son requeridos.' });
             }
             const now = new Date();
             const updateDoc: any = {
                 $set: {
                     title,
                     content,
-                    createdAt: new Date(createdAt),
                     updatedAt: now
                 }
             };
+
             if (coverImage !== undefined) updateDoc.$set.coverImage = coverImage;
 
             const result = await postsCol.findOneAndUpdate(
@@ -54,6 +76,7 @@ export default async function handler(
                 updateDoc,
                 { returnDocument: 'after' }
             );
+
             const fresh = result?.value;
             if (!fresh) {
                 return res.status(404).json({ error: 'Post no encontrado.' });

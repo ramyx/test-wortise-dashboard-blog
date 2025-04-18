@@ -1,3 +1,4 @@
+// pages/api/blog/index.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
@@ -6,7 +7,7 @@ export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
 ) {
-    const collection = db.collection('posts');
+    const postsCol = db.collection('posts');
 
     if (req.method === 'GET') {
         const page = parseInt(String(req.query.page) || '1', 10);
@@ -14,18 +15,18 @@ export default async function handler(
         const search = String(req.query.search || '').trim();
         const skip = (page - 1) * limit;
 
-        // Base lookup to populate authorDoc
+        // Lookup directly using ObjectId stored in `author`
         const lookupStage = {
             $lookup: {
-                from: 'users',
+                from: 'user',
                 localField: 'author',
                 foreignField: '_id',
-                as: 'authorDoc',
+                as: 'authorDoc'
             }
         };
         const unwindStage = { $unwind: { path: '$authorDoc', preserveNullAndEmptyArrays: true } };
 
-        // Build match stage if searching by title, content, or author name
+        // Conditional match for search term
         const matchStage = search
             ? {
                 $match: {
@@ -38,18 +39,14 @@ export default async function handler(
             }
             : null;
 
-        // Count total matching documents
-        let total = 0;
-        if (matchStage) {
-            const countAgg = await collection
-                .aggregate([lookupStage, unwindStage, matchStage, { $count: 'count' }])
-                .toArray();
-            total = countAgg[0]?.count || 0;
-        } else {
-            total = await collection.countDocuments();
-        }
+        // Build aggregation for counting
+        const countPipeline: any[] = [lookupStage, unwindStage];
+        if (matchStage) countPipeline.push(matchStage);
+        countPipeline.push({ $count: 'count' });
+        const countResult = await postsCol.aggregate(countPipeline).toArray();
+        const total = countResult[0]?.count ?? 0;
 
-        // Build aggregation pipeline for paginated results
+        // Build main aggregation pipeline
         const pipeline: any[] = [lookupStage, unwindStage];
         if (matchStage) pipeline.push(matchStage);
         pipeline.push(
@@ -72,13 +69,13 @@ export default async function handler(
             }
         );
 
-        const posts = await collection.aggregate(pipeline).toArray();
+        const posts = await postsCol.aggregate(pipeline).toArray();
 
         return res.status(200).json({
             posts,
             page,
             total,
-            totalPages: Math.ceil(total / limit),
+            totalPages: Math.ceil(total / limit)
         });
     }
 
@@ -92,16 +89,16 @@ export default async function handler(
             title,
             content,
             coverImage,
-            author: new ObjectId(author),
+            author: new ObjectId(author as string),
             createdAt: new Date(createdAt),
             updatedAt: now
         };
-        const result = await collection.insertOne(postDoc);
-        const fresh = await collection.findOne({ _id: result.insertedId });
+        const result = await postsCol.insertOne(postDoc as any);
+        const fresh = await postsCol.findOne({ _id: result.insertedId });
         if (!fresh) return res.status(500).json({ error: 'No se pudo crear el post.' });
 
         const authorData = await db.collection('users').findOne(
-            { _id: fresh.author },
+            { _id: fresh.author as ObjectId },
             { projection: { name: 1 } }
         );
 
@@ -113,12 +110,12 @@ export default async function handler(
             createdAt: fresh.createdAt,
             updatedAt: fresh.updatedAt,
             author: {
-                id: authorData?._id.toString() || '',
+                id: (fresh.author as ObjectId).toString(),
                 name: authorData?.name || ''
             }
         });
     }
 
     res.setHeader('Allow', ['GET', 'POST']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
 }

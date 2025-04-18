@@ -11,6 +11,8 @@ export default function PostsPage() {
 
     const { data, isFetching, error } = usePostsQuery(page, 6, deferredSearch);
     const posts = data?.posts || [];
+    console.log(posts);
+    
     const totalPages = data?.totalPages || 1;
 
     return (
