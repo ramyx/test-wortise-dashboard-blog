@@ -1,7 +1,8 @@
+// pages/api/blog/index.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
-// Handler para rutas GET (lista) y POST (crear)
 export default async function handler(
     req: NextApiRequest,
     res: NextApiResponse
@@ -14,12 +15,22 @@ export default async function handler(
     }
 
     if (req.method === 'POST') {
-        const { title, content } = req.body;
-        if (!title || !content) {
-            return res.status(400).json({ error: 'Título y contenido son requeridos.' });
+        const { title, content, coverImage, author, createdAt } = req.body;
+        if (!title || !content || !author || !createdAt) {
+            return res
+                .status(400)
+                .json({ error: 'Título, contenido, autor y fecha son requeridos.' });
         }
+
         const now = new Date();
-        const result = await collection.insertOne({ title, content, createdAt: now, updatedAt: now });
+        const result = await collection.insertOne({
+            title,
+            content,
+            coverImage,
+            author,
+            createdAt: new Date(createdAt),
+            updatedAt: now,
+        });
         const post = await collection.findOne({ _id: result.insertedId });
         return res.status(201).json(post);
     }

@@ -5,11 +5,11 @@ export type Post = {
     _id: string;
     title: string;
     content: string;
+    coverImage?: string;
+    author: string;
     createdAt: string;
-    updatedAt: string;
 };
 
-// 1) Lista de posts
 export function usePostsQuery() {
     return useQuery<Post[], Error>({
         queryKey: ['posts'],
@@ -17,7 +17,6 @@ export function usePostsQuery() {
     });
 }
 
-// 2) Un solo post
 export function usePostQuery(id?: string) {
     return useQuery<Post, Error>({
         queryKey: ['post', id],
@@ -26,7 +25,6 @@ export function usePostQuery(id?: string) {
     });
 }
 
-// 3) Crear post
 export function useCreatePostMutation() {
     const qc = useQueryClient();
     return useMutation<Post, Error, { title: string; content: string }>({
@@ -37,7 +35,6 @@ export function useCreatePostMutation() {
     });
 }
 
-// 4) Actualizar post
 export function useUpdatePostMutation(id?: string) {
     const qc = useQueryClient();
     return useMutation<Post, Error, { title: string; content: string }>({
@@ -49,7 +46,6 @@ export function useUpdatePostMutation(id?: string) {
     });
 }
 
-// 5) Borrar post
 export function useDeletePostMutation() {
     const qc = useQueryClient();
     return useMutation<void, Error, string>({

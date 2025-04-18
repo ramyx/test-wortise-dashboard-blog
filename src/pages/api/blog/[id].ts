@@ -13,35 +13,51 @@ export default async function handler(
     const _id = new ObjectId(String(id));
     const collection = db.collection('posts');
 
-    if (req.method === 'GET') {
-        const post = await collection.findOne({ _id });
-        if (!post) return res.status(404).json({ error: 'Post no encontrado.' });
-        return res.status(200).json(post);
-    }
-
-    if (req.method === 'PUT') {
-        const { title, content } = req.body;
-        if (!title || !content) {
-            return res.status(400).json({ error: 'Título y contenido son requeridos.' });
+    switch (req.method) {
+        case 'GET': {
+            const post = await collection.findOne({ _id });
+            if (!post) return res.status(404).json({ error: 'Post no encontrado.' });
+            return res.status(200).json(post);
         }
-        const now = new Date();
-        const result = await collection.findOneAndUpdate(
-            { _id },
-            { $set: { title, content, updatedAt: now } },
-            { returnDocument: 'after' }
-        );
-        if (!result?.value) return res.status(404).json({ error: 'Post no encontrado.' });
-        return res.status(200).json(result.value);
-    }
 
-    if (req.method === 'DELETE') {
-        const result = await collection.deleteOne({ _id });
-        if (result.deletedCount === 0) {
-            return res.status(404).json({ error: 'Post no encontrado.' });
+        case 'PUT': {
+            const { title, content, coverImage, author, createdAt } = req.body;
+            if (!title || !content || !author || !createdAt) {
+                return res.status(400).json({ error: 'Todos los campos son requeridos.' });
+            }
+            const now = new Date();
+            const updateDoc = {
+                $set: {
+                    title,
+                    content,
+                    ...(coverImage !== undefined && { coverImage }),
+                    author,
+                    createdAt: new Date(createdAt),
+                    updatedAt: now,
+                },
+            };
+            const result = await collection.findOneAndUpdate(
+                { _id },
+                updateDoc,
+                { returnDocument: 'after' }
+            );
+            if (!result?.value) {
+                return res.status(404).json({ error: 'Post no encontrado.' });
+            }
+            return res.status(200).json(result.value);
         }
-        return res.status(204).end();
-    }
 
-    res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
+        case 'DELETE': {
+            const result = await collection.deleteOne({ _id });
+            if (result.deletedCount === 0) {
+                return res.status(404).json({ error: 'Post no encontrado.' });
+            }
+            return res.status(204).end();
+        }
+
+        default: {
+            res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
+            return res.status(405).end(`Method ${req.method} Not Allowed`);
+        }
+    }
 }

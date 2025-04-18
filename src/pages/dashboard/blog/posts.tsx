@@ -1,22 +1,20 @@
-import { useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { usePostsQuery, useDeletePostMutation } from '@/hooks/useBlog';
 
 export default function PostsPage() {
     const { data: posts, isLoading, error } = usePostsQuery();
     const deletePost = useDeletePostMutation();
 
-    // Optional: refetch on mount
-    useEffect(() => {
-        // Could refetch or handle side-effects here
-    }, []);
-
     if (isLoading) {
         return (
             <DashboardLayout>
                 <div className="flex justify-center items-center h-full">
-                    <span className="loading text-2xl" style={{ color: 'var(--paynes-gray)' }}></span>
+                    <span
+                        className="loading text-2xl"
+                        style={{ color: 'var(--paynes-gray)' }}
+                    />
                 </div>
             </DashboardLayout>
         );
@@ -33,7 +31,10 @@ export default function PostsPage() {
     return (
         <DashboardLayout>
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-3xl font-semibold" style={{ color: 'var(--paynes-gray)' }}>
+                <h2
+                    className="text-3xl font-semibold"
+                    style={{ color: 'var(--paynes-gray)' }}
+                >
                     Posts
                 </h2>
                 <Link
@@ -52,12 +53,33 @@ export default function PostsPage() {
                         className="card shadow-md p-6"
                         style={{ backgroundColor: 'var(--dun)' }}
                     >
-                        <h3 className="text-2xl font-bold" style={{ color: 'var(--paynes-gray)' }}>
+                        {post.coverImage && (
+                            <img
+                                src={post.coverImage}
+                                alt={post.title}
+                                className="w-full h-48 object-cover rounded mb-4"
+                            />
+                        )}
+
+                        <h3
+                            className="text-2xl font-bold"
+                            style={{ color: 'var(--paynes-gray)' }}
+                        >
                             {post.title}
                         </h3>
-                        <p className="text-sm mb-4" style={{ color: 'var(--cadet-gray)' }}>
+                        <p
+                            className="text-sm"
+                            style={{ color: 'var(--chamoisee)' }}
+                        >
+                            Autor: {post.author}
+                        </p>
+                        <p
+                            className="text-sm mb-4"
+                            style={{ color: 'var(--cadet-gray)' }}
+                        >
                             Creado: {new Date(post.createdAt).toLocaleString()}
                         </p>
+
                         <div className="flex space-x-4">
                             <Link
                                 href={`/dashboard/blog/${post._id}/edit`}
