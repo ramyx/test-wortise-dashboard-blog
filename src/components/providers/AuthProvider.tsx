@@ -2,7 +2,6 @@ import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { authClient } from "@/lib/auth-client";
 
-
 interface AuthProviderProps {
     children: ReactNode;
 }
@@ -18,27 +17,34 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         setMounted(true);
     }, []);
 
+    useEffect(() => {
+        if (
+            mounted &&
+            !publicPaths.includes(router.pathname) &&
+            !isPending &&
+            !session
+        ) {
+            router.push("/signin");
+        }
+    }, [mounted, router, isPending, session]);
+
     if (!mounted) return null;
 
     if (publicPaths.includes(router.pathname)) {
         return <>{children}</>;
     }
 
-    if (isPending) return <div>Cargando...</div>;
+    if (isPending) {
+        return <div>Cargando...</div>;
+    }
 
     if (error) {
         return (
             <div>
-                Error: {error.message || "Ocurrió un error inesperado al cargar la sesión."}
+                Error: {error.message ?? "Ocurrió un error inesperado al cargar la sesión."}
             </div>
         );
     }
-
-    useEffect(() => {
-        if (!isPending && !session) {
-            router.push("/signin");
-        }
-    }, [isPending, session, router]);
 
     return <>{children}</>;
 }
