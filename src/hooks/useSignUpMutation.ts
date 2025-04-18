@@ -1,8 +1,8 @@
-// hooks/useSignUpMutation.ts
 import { useRouter } from "next/router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { SignUpFormInputs } from "@/schemas/signupSchema";
+import { APIError } from "better-auth";
 
 export interface SignUpResponse {
     token: string | null;
@@ -21,27 +21,25 @@ export function useSignUpMutation() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
-    return useMutation<SignUpResponse, Error, SignUpFormInputs>({
-        mutationFn: async (data: SignUpFormInputs): Promise<SignUpResponse> => {
-            const result = await authClient.signUp.email({
-                name: data.name,
-                email: data.email,
-                password: data.password,
+    return useMutation<SignUpResponse, APIError, SignUpFormInputs>({
+        mutationFn: async ({ name, email, password }) => {
+            // Desestructuramos respuesta y error
+            const { data, error } = await authClient.signUp.email({
+                name,
+                email,
+                password,
             });
 
-            // Accedemos a result.data.token
-            if (!result.data?.token) {
-                console.error("Resultado del signUp:", result);
-                throw new Error("Error desconocido al registrarse.");
+            if (error) {
+                throw error;
             }
-            return result.data;
+            return data;
         },
         onSuccess() {
-            // Invalida la query de sesión para refrescar la sesión
             queryClient.invalidateQueries({ queryKey: ["session"] });
             router.push("/dashboard");
         },
-        onError(error: Error) {
+        onError(error) {
             console.error("Error al registrarse:", error);
         },
     });
