@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export default async function handler(
     req: NextApiRequest,
@@ -13,10 +14,38 @@ export default async function handler(
         const skip = (page - 1) * limit;
 
         const total = await collection.countDocuments();
-        const posts = await collection.find()
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit)
+        const posts = await collection
+            .aggregate([
+                { $sort: { createdAt: -1 } },
+                { $skip: skip },
+                { $limit: limit },
+                {
+                    $lookup: {
+                        from: 'users',
+                        let: { authorId: '$author' },
+                        pipeline: [
+                            { $match: { $expr: { $eq: ['$_id', { $toObjectId: '$$authorId' }] } } },
+                            { $project: { _id: 1, name: 1 } }
+                        ],
+                        as: 'authorDoc',
+                    },
+                },
+                { $unwind: { path: '$authorDoc', preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                        _id: { $toString: '$_id' },
+                        title: 1,
+                        content: 1,
+                        coverImage: 1,
+                        createdAt: 1,
+                        updatedAt: 1,
+                        author: {
+                            id: { $toString: '$authorDoc._id' },
+                            name: '$authorDoc.name',
+                        },
+                    },
+                },
+            ])
             .toArray();
 
         return res.status(200).json({
@@ -30,22 +59,38 @@ export default async function handler(
     if (req.method === 'POST') {
         const { title, content, coverImage, author, createdAt } = req.body;
         if (!title || !content || !author || !createdAt) {
-            return res
-                .status(400)
-                .json({ error: 'Título, contenido, autor y fecha son requeridos.' });
+            return res.status(400).json({ error: 'Campos requeridos.' });
         }
-
         const now = new Date();
-        const result = await collection.insertOne({
+        const postDoc = {
             title,
             content,
             coverImage,
-            author,
+            author: new ObjectId(author),
             createdAt: new Date(createdAt),
             updatedAt: now,
+        };
+        const result = await collection.insertOne(postDoc);
+        const fresh = await collection.findOne({ _id: result.insertedId });
+        if (!fresh) return res.status(500).json({ error: 'No se pudo crear el post.' });
+
+        // Devolver con autor poblado
+        const authorData = await db
+            .collection('users')
+            .findOne({ _id: fresh.author }, { projection: { name: 1 } });
+
+        return res.status(201).json({
+            _id: fresh._id.toString(),
+            title: fresh.title,
+            content: fresh.content,
+            coverImage: fresh.coverImage,
+            createdAt: fresh.createdAt,
+            updatedAt: fresh.updatedAt,
+            author: {
+                id: authorData?._id.toString() || '',
+                name: authorData?.name || '',
+            },
         });
-        const post = await collection.findOne({ _id: result.insertedId });
-        return res.status(201).json(post);
     }
 
     res.setHeader('Allow', ['GET', 'POST']);

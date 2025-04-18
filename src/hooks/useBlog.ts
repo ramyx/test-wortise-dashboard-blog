@@ -1,8 +1,20 @@
 import axios from 'axios';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+/**
+ * Type definitions
+ */
 export type Post = {
     _id: string;
+    title: string;
+    content: string;
+    coverImage?: string;
+    author: { id: string; name: string };
+    createdAt: string;
+    updatedAt: string;
+};
+
+export type PostInput = {
     title: string;
     content: string;
     coverImage?: string;
@@ -10,6 +22,9 @@ export type Post = {
     createdAt: string;
 };
 
+/**
+ * 1) Fetch paginated list of posts
+ */
 export function usePostsQuery(page = 1, limit = 10) {
     return useQuery<{
         posts: Post[];
@@ -25,41 +40,63 @@ export function usePostsQuery(page = 1, limit = 10) {
     });
 }
 
+/**
+ * 2) Fetch a single post by ID
+ */
 export function usePostQuery(id?: string) {
     return useQuery<Post, Error>({
         queryKey: ['post', id],
-        queryFn: () => axios.get(`/api/blog/${id}`).then(res => res.data),
         enabled: Boolean(id),
+        queryFn: () => axios.get(`/api/blog/${id}`).then(res => res.data),
     });
 }
 
+/**
+ * 3) Create a new post
+ */
 export function useCreatePostMutation() {
-    const qc = useQueryClient();
-    return useMutation<Post, Error, { title: string; content: string }>({
-        mutationFn: (data) => axios.post('/api/blog', data).then(res => res.data),
+    const queryClient = useQueryClient();
+    return useMutation<Post, Error, PostInput>({
+        mutationFn: async (data) => {
+            const response = await axios.post('/api/blog', data);
+            return response.data;
+        },
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['posts'] });
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
         },
     });
 }
 
+/**
+ * 4) Update an existing post
+ */
 export function useUpdatePostMutation(id?: string) {
-    const qc = useQueryClient();
-    return useMutation<Post, Error, { title: string; content: string }>({
-        mutationFn: (data) => axios.put(`/api/blog/${id}`, data).then(res => res.data),
+    const queryClient = useQueryClient();
+    return useMutation<Post, Error, PostInput>({
+        mutationFn: async (data) => {
+            const response = await axios.put(`/api/blog/${id}`, data);
+            return response.data;
+        },
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['posts'] });
-            if (id) qc.invalidateQueries({ queryKey: ['post', id] });
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+            if (id) {
+                queryClient.invalidateQueries({ queryKey: ['post', id] });
+            }
         },
     });
 }
 
+/**
+ * 5) Delete a post
+ */
 export function useDeletePostMutation() {
-    const qc = useQueryClient();
+    const queryClient = useQueryClient();
     return useMutation<void, Error, string>({
-        mutationFn: (id) => axios.delete(`/api/blog/${id}`).then(() => { }),
+        mutationFn: async (id) => {
+            await axios.delete(`/api/blog/${id}`);
+        },
         onSuccess: () => {
-            qc.invalidateQueries({ queryKey: ['posts'] });
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
         },
     });
 }

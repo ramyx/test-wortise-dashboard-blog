@@ -5,7 +5,7 @@ import { usePostsQuery, useDeletePostMutation } from '@/hooks/useBlog';
 
 export default function PostsPage() {
     const [page, setPage] = useState(1);
-    const { data, isLoading, error } = usePostsQuery(page, 2);
+    const { data, isLoading, error } = usePostsQuery(page, 6);
     const deletePost = useDeletePostMutation();
 
     if (isLoading) {
@@ -74,7 +74,7 @@ export default function PostsPage() {
                             className="text-sm"
                             style={{ color: 'var(--chamoisee)' }}
                         >
-                            Autor: {post.author}
+                            Autor: {post.author.name}
                         </p>
                         <p
                             className="text-sm mb-4"
@@ -84,6 +84,13 @@ export default function PostsPage() {
                         </p>
 
                         <div className="flex space-x-4">
+                            <Link
+                                href={`/dashboard/blog/${post._id}/view`}
+                                className="btn btn-link"
+                                style={{ color: 'var(--chamoisee)' }}
+                            >
+                                Ver
+                            </Link>
                             <Link
                                 href={`/dashboard/blog/${post._id}/edit`}
                                 className="btn btn-link"

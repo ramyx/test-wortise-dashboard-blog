@@ -1,50 +1,36 @@
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { usePostQuery, useUpdatePostMutation } from '@/hooks/useBlog';
-import { authClient } from '@/lib/auth-client';
+import { usePostQuery, useUpdatePostMutation, PostInput } from '@/hooks/useBlog';
 import { useEffect } from 'react';
-
-interface FormInputs {
-    title: string;
-    content: string;
-    coverImage?: string;
-    author: string;
-    createdAt: string;
-}
 
 export default function EditPostPage() {
     const router = useRouter();
     const { id } = router.query as { id: string };
 
-    // RQ: obtener el post existente
-    const { data: post, isLoading: isFetching, error } = usePostQuery(id);
+    const { data: post, isPending: isFetching, error } = usePostQuery(id);
     const updatePost = useUpdatePostMutation(id);
-
-    // auth session para autor (fallback)
-    const { data: session } = authClient.useSession();
 
     const {
         register,
         handleSubmit,
         reset,
         formState: { errors }
-    } = useForm<FormInputs>();
+    } = useForm<PostInput>();
 
-    // Resetear valores cuando post o sesión cambien
     useEffect(() => {
         if (post) {
             reset({
                 title: post.title,
                 content: post.content,
-                coverImage: (post as any).coverImage ?? '',
-                author: post.author ?? session?.user?.name ?? '',
+                coverImage: post.coverImage || '',
+                author: post.author.id,
                 createdAt: new Date(post.createdAt).toISOString().split('T')[0]
             });
         }
-    }, [post, reset, session]);
+    }, [post, reset]);
 
-    const onSubmit: SubmitHandler<FormInputs> = (data) => {
+    const onSubmit: SubmitHandler<PostInput> = (data) => {
         updatePost.mutate(data, {
             onSuccess: () => router.push('/dashboard/blog/posts')
         });
@@ -105,14 +91,15 @@ export default function EditPostPage() {
                     />
                 </div>
 
-                {/* Autor */}
+                {/* Campos ocultos */}
+                <input type="hidden" {...register('author')} />
+
+                {/* Autor mostrando nombre */}
                 <div>
                     <label className="block mb-1 text-lg font-medium">Autor</label>
-                    <input
-                        {...register('author', { required: true })}
-                        className="input input-bordered w-full"
-                        readOnly
-                    />
+                    <p className="input input-bordered w-full bg-gray-200 text-gray-600">
+                        {post?.author.name}
+                    </p>
                 </div>
 
                 {/* Fecha de creación */}

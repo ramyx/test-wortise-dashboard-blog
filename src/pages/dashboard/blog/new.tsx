@@ -1,7 +1,7 @@
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useRouter } from 'next/router';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { useCreatePostMutation } from '@/hooks/useBlog';
+import { PostInput, useCreatePostMutation } from '@/hooks/useBlog';
 import { authClient } from '@/lib/auth-client';
 import { useEffect } from 'react';
 
@@ -20,25 +20,20 @@ export default function NewPostPage() {
     // Obtenemos autor desde sesión
     const { data: session } = authClient.useSession();
 
-    // Valores por defecto para autor y fecha
-    const defaultAuthor = session?.user?.name ?? '';
+    // Valores por defecto para fecha
     const defaultDate = new Date().toISOString().split('T')[0];
 
-    const { register, handleSubmit, setValue } = useForm<FormInputs>({
-        defaultValues: {
-            author: defaultAuthor,
-            createdAt: defaultDate,
-        }
+    const { register, handleSubmit, setValue } = useForm<PostInput>({
+        defaultValues: { author: session?.user?.id ?? '', createdAt: defaultDate },
     });
 
-    // Si cambia sesión, actualizamos autor
     useEffect(() => {
-        if (session?.user?.name) {
-            setValue('author', session.user.name);
+        if (session?.user?.id) {
+            setValue('author', session.user.id);
         }
     }, [session, setValue]);
 
-    const onSubmit: SubmitHandler<FormInputs> = (data) => {
+    const onSubmit: SubmitHandler<PostInput> = (data) => {
         createPost.mutate(data, {
             onSuccess: () => router.push('/dashboard/blog/posts'),
         });
@@ -74,14 +69,8 @@ export default function NewPostPage() {
                     />
                 </div>
 
-                <div>
-                    <label className="block mb-1 text-lg font-medium">Autor</label>
-                    <input
-                        {...register('author', { required: true })}
-                        className="input input-bordered w-full"
-                        readOnly
-                    />
-                </div>
+                {/* Campo autor oculto, se asigna en onSubmit */}
+                <input type="hidden" {...register('author')} />
 
                 <div>
                     <label className="block mb-1 text-lg font-medium">Fecha de creación</label>
