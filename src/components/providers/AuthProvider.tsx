@@ -6,7 +6,7 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
-const publicPaths = ["/signin", "/signup"];
+const publicPaths = ["/", "/signin", "/signup"];
 
 export default function AuthProvider({ children }: AuthProviderProps) {
     const { data: session, isPending, error } = authClient.useSession();
@@ -24,7 +24,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
             !isPending &&
             !session
         ) {
-            router.push("/signin");
+            router.push("/");
         }
     }, [mounted, router, isPending, session]);
 

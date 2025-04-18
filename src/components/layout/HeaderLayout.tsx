@@ -12,7 +12,7 @@ export default function Header({ title = 'Dashboard', children }: HeaderProps) {
 
     const handleLogout = async () => {
         await authClient.signOut();
-        router.push('/signin');
+        router.push('/');
     };
 
     return (

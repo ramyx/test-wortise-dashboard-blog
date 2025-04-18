@@ -147,7 +147,7 @@ export default function SignUpPage() {
                 {/* Link a SignIn */}
                 <p className="text-center pt-4" style={{ color: "var(--cadet-gray)" }}>
                     ¿Ya tienes cuenta?{' '}
-                    <Link href="/signin" className="link font-medium" style={{ color: "var(--chamoisee)" }}>
+                    <Link href="/" className="link font-medium" style={{ color: "var(--chamoisee)" }}>
                         Iniciar Sesión
                     </Link>
                 </p>
