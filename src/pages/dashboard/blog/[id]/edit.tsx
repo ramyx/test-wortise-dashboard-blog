@@ -8,7 +8,7 @@ export default function EditPostPage() {
     const router = useRouter();
     const { id } = router.query as { id: string };
 
-    const { data: post, isPending: isFetching, error } = usePostQuery(id);
+    const { data: post, isPending, error } = usePostQuery(id);
     const updatePost = useUpdatePostMutation(id);
 
     const {
@@ -36,11 +36,11 @@ export default function EditPostPage() {
         });
     };
 
-    if (isFetching) {
+    if (isPending) {
         return (
             <DashboardLayout>
                 <div className="flex items-center justify-center h-full">
-                    <span className="loading text-2xl" style={{ color: 'var(--paynes-gray)' }} />
+                    <span className="loading text-2xl" style={{ color: 'var(--jet)' }} />
                 </div>
             </DashboardLayout>
         );
@@ -57,7 +57,7 @@ export default function EditPostPage() {
     return (
         <DashboardLayout>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-lg mx-auto">
-                <h1 className="text-2xl font-bold text-center" style={{ color: 'var(--paynes-gray)' }}>
+                <h1 className="text-2xl font-bold text-center" style={{ color: 'var(--jet)' }}>
                     Editar Post
                 </h1>
 
@@ -93,31 +93,29 @@ export default function EditPostPage() {
 
                 {/* Campos ocultos */}
                 <input type="hidden" {...register('author')} />
+                <input type="hidden" {...register('createdAt')} />
 
-                {/* Autor mostrando nombre */}
-                <div>
+                {/* Autor */}
+                {/* <div>
                     <label className="block mb-1 text-lg font-medium">Autor</label>
                     <p className="input input-bordered w-full bg-gray-200 text-gray-600">
                         {post?.author.name}
                     </p>
-                </div>
+                </div> */}
 
                 {/* Fecha de creación */}
-                <div>
+                {/* <div>
                     <label className="block mb-1 text-lg font-medium">Fecha de creación</label>
-                    <input
-                        type="date"
-                        {...register('createdAt', { required: true })}
-                        className="input input-bordered w-full"
-                    />
-                    {errors.createdAt && <p className="text-sm text-red-600">Este campo es obligatorio</p>}
-                </div>
+                    <p className="input input-bordered w-full bg-gray-200 text-gray-600">
+                        {new Date(post?.createdAt).toLocaleDateString()}
+                    </p>
+                </div> */}
 
                 {/* Botón Actualizar */}
                 <div>
                     <button
                         type="submit"
-                        className={`btn btn-primary w-full ${updatePost.isPending && 'loading'}`}
+                        className={`btn btn-primary w-full ${updatePost.isPending ? 'loading' : ''}`}
                         disabled={updatePost.isPending}
                     >
                         {updatePost.isPending ? 'Actualizando...' : 'Actualizar'}

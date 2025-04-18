@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useDeferredValue } from 'react';
 import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { usePostsQuery, useDeletePostMutation } from '@/hooks/useBlog';
@@ -6,38 +6,17 @@ import { usePostsQuery, useDeletePostMutation } from '@/hooks/useBlog';
 export default function PostsPage() {
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
-    // Hook actualizado para aceptar search term
-    const { data, isLoading, error } = usePostsQuery(page, 6, search);
+    const deferredSearch = useDeferredValue(search);
     const deletePost = useDeletePostMutation();
 
-    if (isLoading) {
-        return (
-            <DashboardLayout>
-                <div className="flex justify-center items-center h-full">
-                    <span
-                        className="loading text-2xl"
-                        style={{ color: 'var(--paynes-gray)' }}
-                    />
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    if (error || !data) {
-        return (
-            <DashboardLayout>
-                <p className="text-center text-red-600">Error: {error?.message}</p>
-            </DashboardLayout>
-        );
-    }
-
-    const { posts, totalPages } = data;
+    const { data, isFetching, error } = usePostsQuery(page, 6, deferredSearch);
+    const posts = data?.posts || [];
+    const totalPages = data?.totalPages || 1;
 
     return (
         <DashboardLayout>
-            {/* Header con buscador */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
-                <h2 className="text-2xl font-semibold" style={{ color: 'var(--paynes-gray)' }}>
+                <h2 className="text-2xl font-semibold" style={{ color: 'var(--jet)' }}>
                     Posts
                 </h2>
                 <div className="flex space-x-2 w-full md:w-auto">
@@ -51,15 +30,23 @@ export default function PostsPage() {
                     <Link
                         href="/dashboard/blog/new"
                         className="btn"
-                        style={{ backgroundColor: 'var(--earth-yellow)', color: 'var(--paynes-gray)' }}
+                        style={{ backgroundColor: 'var(--sky-magenta)', color: 'white' }}
                     >
                         Nuevo
                     </Link>
                 </div>
             </div>
 
-            {/* Lista compacta */}
-            <div className="overflow-x-auto">
+            {error && (
+                <p className="text-center text-red-600 mb-4">Error: {error.message}</p>
+            )}
+
+            <div className="relative overflow-x-auto">
+                {isFetching && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                        <span className="loading text-2xl" style={{ color: 'var(--jet)' }} />
+                    </div>
+                )}
                 <table className="table w-full text-sm">
                     <thead>
                         <tr>
@@ -72,11 +59,11 @@ export default function PostsPage() {
                     <tbody>
                         {posts.map((post) => (
                             <tr key={post._id}>
-                                <td className="font-medium" style={{ color: 'var(--paynes-gray)' }}>
+                                <td className="font-medium" style={{ color: 'var(--jet)' }}>
                                     {post.title}
                                 </td>
-                                <td style={{ color: 'var(--chamoisee)' }}>{post.author.name}</td>
-                                <td style={{ color: 'var(--cadet-gray)' }}>
+                                <td style={{ color: 'var(--purpureus)' }}>{post.author.name}</td>
+                                <td style={{ color: 'var(--lavender-web)' }}>
                                     {new Date(post.createdAt).toLocaleDateString()}
                                 </td>
                                 <td className="space-x-2">
@@ -108,21 +95,21 @@ export default function PostsPage() {
                 </table>
             </div>
 
-            {/* Paginado */}
+            {/* Pagination */}
             <div className="flex justify-center items-center space-x-4 mt-4">
                 <button
                     className="btn btn-sm"
-                    onClick={() => setPage(old => Math.max(old - 1, 1))}
+                    onClick={() => setPage((old) => Math.max(old - 1, 1))}
                     disabled={page === 1}
                 >
                     «
                 </button>
-                <span style={{ color: 'var(--paynes-gray)' }}>
+                <span style={{ color: 'var(--jet)' }}>
                     {page} / {totalPages}
                 </span>
                 <button
                     className="btn btn-sm"
-                    onClick={() => setPage(old => Math.min(old + 1, totalPages))}
+                    onClick={() => setPage((old) => Math.min(old + 1, totalPages))}
                     disabled={page === totalPages}
                 >
                     »
