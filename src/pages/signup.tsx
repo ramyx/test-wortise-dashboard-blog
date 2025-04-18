@@ -3,55 +3,76 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { useSignUpMutation } from "@/hooks/useSignUpMutation";
 import { SignUpFormInputs, signUpSchema } from "@/schemas/signupSchema";
+import { useSignUpMutation } from "@/hooks/useSignUpMutation";
 import type { APIError } from "better-auth";
 
-export default function SignUpPage() {
-    const { register, handleSubmit, formState: { errors } } =
-        useForm<SignUpFormInputs>({ resolver: zodResolver(signUpSchema) });
+declare global {
+    interface Window {
+        grecaptcha?: {
+            ready: (callback: () => void) => void;
+            execute: (siteKey: string, options: { action: string }) => Promise<string>;
+        };
+    }
+}
 
+export default function SignUpPage() {
     const router = useRouter();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const signUp = useSignUpMutation();
 
+    const { register, handleSubmit, formState: { errors } } =
+        useForm<SignUpFormInputs>({ resolver: zodResolver(signUpSchema) });
+
     const onSubmit: SubmitHandler<SignUpFormInputs> = async (data) => {
         setErrorMessage(null);
+
+        if (!window.grecaptcha) {
+            setErrorMessage("reCAPTCHA no ha cargado aún.");
+            return;
+        }
+
         try {
-            await signUp.mutateAsync(data);
+            // Esperar a que grecaptcha esté listo
+            await new Promise<void>((resolve) => window.grecaptcha!.ready(resolve));
+            // Generar token para la acción "sign_up"
+            const token = await window.grecaptcha!.execute(
+                process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!,
+                { action: "sign_up" }
+            );
+
+            // Llamar a la mutación incluyendo captchaToken
+            await signUp.mutateAsync({
+                ...data,
+                captchaToken: token,
+            });
+
+            // Redirigir al dashboard tras registro exitoso
             router.push("/dashboard");
         } catch (err: any) {
             const apiErr = err as APIError;
             setErrorMessage(
-                apiErr.body?.message ?? err.message ?? "Ocurrió un error al registrarse."
+                apiErr.body?.message ?? err.message ??
+                "Ocurrió un error al registrarse."
             );
         }
     };
 
     return (
-        <div
-            className="flex items-center justify-center min-h-screen"
-            style={{ background: "var(--gradient-bottom-right)" }}
-        >
+        <div className="flex items-center justify-center min-h-screen" style={{ background: "var(--gradient-bottom-right)" }}>
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 className="card w-full max-w-md shadow-xl p-8 space-y-6"
                 style={{ backgroundColor: "var(--dun)" }}
             >
-                <h1
-                    className="text-2xl font-bold text-center"
-                    style={{ color: "var(--paynes-gray)" }}
-                >
+                <h1 className="text-2xl font-bold text-center" style={{ color: "var(--paynes-gray)" }}>
                     Registrarse
                 </h1>
 
                 {/* Nombre */}
                 <div className="form-control w-full">
                     <label className="label">
-                        <span
-                            className="label-text"
-                            style={{ color: "var(--chamoisee)" }}
-                        >
+                        <span className="label-text" style={{ color: "var(--chamoisee)" }}>
                             Nombre
                         </span>
                     </label>
@@ -62,21 +83,16 @@ export default function SignUpPage() {
                         {...register("name")}
                     />
                     {errors.name && (
-                        <label className="label">
-                            <span className="label-text-alt text-error">
-                                {errors.name.message}
-                            </span>
-                        </label>
+                        <p className="label-text-alt text-error">
+                            {errors.name.message}
+                        </p>
                     )}
                 </div>
 
                 {/* Email */}
                 <div className="form-control w-full">
                     <label className="label">
-                        <span
-                            className="label-text"
-                            style={{ color: "var(--chamoisee)" }}
-                        >
+                        <span className="label-text" style={{ color: "var(--chamoisee)" }}>
                             Correo Electrónico
                         </span>
                     </label>
@@ -87,21 +103,16 @@ export default function SignUpPage() {
                         {...register("email")}
                     />
                     {errors.email && (
-                        <label className="label">
-                            <span className="label-text-alt text-error">
-                                {errors.email.message}
-                            </span>
-                        </label>
+                        <p className="label-text-alt text-error">
+                            {errors.email.message}
+                        </p>
                     )}
                 </div>
 
                 {/* Contraseña */}
                 <div className="form-control w-full">
                     <label className="label">
-                        <span
-                            className="label-text"
-                            style={{ color: "var(--chamoisee)" }}
-                        >
+                        <span className="label-text" style={{ color: "var(--chamoisee)" }}>
                             Contraseña
                         </span>
                     </label>
@@ -112,20 +123,15 @@ export default function SignUpPage() {
                         {...register("password")}
                     />
                     {errors.password && (
-                        <label className="label">
-                            <span className="label-text-alt text-error">
-                                {errors.password.message}
-                            </span>
-                        </label>
+                        <p className="label-text-alt text-error">
+                            {errors.password.message}
+                        </p>
                     )}
                 </div>
 
                 {/* Error servidor */}
                 {errorMessage && (
-                    <p
-                        className="text-center"
-                        style={{ color: "var(--earth-yellow)" }}
-                    >
+                    <p className="text-center" style={{ color: "var(--earth-yellow)" }}>
                         {errorMessage}
                     </p>
                 )}
@@ -134,7 +140,7 @@ export default function SignUpPage() {
                 <div className="form-control mt-4">
                     <button
                         type="submit"
-                        className={`btn w-full ${signUp.isPending && "loading"}`}
+                        className={`btn w-full ${signUp.isPending ? "loading" : ""}`}
                         style={{ backgroundColor: "var(--paynes-gray)", color: "white" }}
                         disabled={signUp.isPending}
                     >
@@ -143,21 +149,12 @@ export default function SignUpPage() {
                 </div>
 
                 {/* Link a SignIn */}
-                <div className="text-center pt-4">
-                    <span
-                        className="text-sm"
-                        style={{ color: "var(--cadet-gray)" }}
-                    >
-                        ¿Ya tienes cuenta?{' '}
-                        <Link
-                            href="/signin"
-                            className="link font-medium"
-                            style={{ color: "var(--chamoisee)" }}
-                        >
-                            Iniciar Sesión
-                        </Link>
-                    </span>
-                </div>
+                <p className="text-center pt-4" style={{ color: "var(--cadet-gray)" }}>
+                    ¿Ya tienes cuenta?{' '}
+                    <Link href="/signin" className="link font-medium" style={{ color: "var(--chamoisee)" }}>
+                        Iniciar Sesión
+                    </Link>
+                </p>
             </form>
         </div>
     );

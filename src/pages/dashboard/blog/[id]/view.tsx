@@ -7,8 +7,6 @@ export default function ViewPostPage() {
     const router = useRouter();
     const { id } = router.query as { id: string };
     const { data: post, isLoading, error } = usePostQuery(id);
-
-    console.log(post);
     
     if (isLoading) {
         return (

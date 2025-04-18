@@ -39,7 +39,7 @@ export default function Sidebar() {
                                     backgroundColor: 'transparent',
                                 }}
                             >
-                                New Post
+                                Nuevo Post
                             </Link>
                         </li>
                     </ul>

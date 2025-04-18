@@ -39,7 +39,7 @@ export default function Header({ title = 'Dashboard', children }: HeaderProps) {
                         color: 'var(--paynes-gray)',
                     }}
                 >
-                    Logout
+                    Salir
                 </button>
             </div>
         </header>
